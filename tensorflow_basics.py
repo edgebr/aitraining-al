@@ -169,7 +169,6 @@ def moving_average(a, w=10):
     ma = [val if idx < w else sum(a[(idx - w) : idx]) / w for idx, val in enumerate(a)]
     return ma
 
-
 # %%
 x_train = np.linspace(-1, 1, 100)
 y_train = 2 * x_train + np.random.randn(*x_train.shape) * 0.3  # y = 2 * x + noise
@@ -390,6 +389,125 @@ print(tt3)
 
 # %% [markdown]
 # ## Experiment 8
+# - After this experiment, you will know how to save and load models.
+# - TODO: use `tensorflow_datasets`
+#
+# ### Saving a model
+# %%
+import os
+import tensorflow as tf
+from tensorflow.examples.tutorials.mnist import input_data
+
+
+mnist = input_data.read_data_sets("mnist", one_hot=True)
+
+# %%
+# Define a input variable
+X = tf.placeholder(tf.float32, [None, 784])
+
+# Define parameters
+W = tf.Variable(tf.zeros([784, 10]))
+b = tf.Variable(tf.zeros([10]))
+
+# Define an activation function
+logits = tf.nn.softmax(tf.matmul(X, W) + b)
+
+# Define an ouput variable
+y = tf.placeholder(tf.float32, [None, 10])
+
+# Define a cost function
+cross_entropy = tf.reduce_mean(
+    -tf.reduce_sum(y * tf.log(logits), reduction_indices=[1])
+)
+
+# Define an optimization function
+train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+
+# %%
+# Initialize variables
+init = tf.global_variables_initializer()
+
+# Define a session
+sess = tf.Session()
+
+# Initialize the session
+sess.run(init)
+
+# Define the saver of the model
+saver = tf.train.Saver()
+
+# Perform n_rounds
+n_rounds = 1000
+for i in range(1000):
+    batch_xs, batch_ys = mnist.train.next_batch(100)
+    sess.run(train_step, feed_dict={X: batch_xs, y: batch_ys})
+
+print("Training finished!")
+
+# %%
+# Create a saving directory for the model
+model_dir = "mnist_model"
+model_name = "ckp"
+if not os.path.exists(model_dir):
+    os.mkdir(model_dir)
+
+# %%
+# Save the model
+loc = saver.save(sess, os.path.join(model_dir, model_name))
+
+print(f"The model is saved on {loc}!")
+
+# ### Saving a model
+
+
+# %% [markdown]
+# ### Loading a model
+
+# %%
+# TODO: explaing why this is needed
+tf.reset_default_graph()
+
+# Create a session
+sess = tf.Session()
+
+# Define an input variable
+X = tf.placeholder(tf.float32, [None, 784])
+
+# Define model parameters
+W = tf.Variable(tf.zeros([784, 10]))
+b = tf.Variable(tf.zeros([10]))
+
+# Define a model and a activation function
+logits = tf.nn.softmax(tf.matmul(X, W) + b)
+
+# Define the saver of the model
+saver = tf.train.Saver([W, b])
+
+
+# %%
+# Restore the model
+saver.restore(sess, "mnist_model/ckp")
+
+print("The model is restored!")
+
+
+# %%
+# Fecth a image
+idx = 0
+img = mnist.test.images[idx]
+
+# Compute results
+ret = sess.run(logits, feed_dict={X: img.reshape(1, 784)})
+
+print("The model result is computed!")
+
+# Display results
+y_pred = ret.argmax()
+y_true = mnist.test.labels[idx].argmax()
+print(f"Predicted results: {y_pred} (prob={ret.max():.4f})")  # `ret` is a vector of probabilities
+print(f"Actual result: {y_true}")
+
 
 # %% [markdown]
 # ## Experiment 9
+
