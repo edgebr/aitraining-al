@@ -510,4 +510,80 @@ print(f"Actual result: {y_true}")
 
 # %% [markdown]
 # ## Experiment 9
+# - After this experiment, you will know how to perform a linear regression using TensorFlow.
+
+
+# %%
+import tensorflow as tf
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn
+
+tf.reset_default_graph()
+
+# %%
+data = pd.read_csv('bj_housing2.csv')
+
+# Preprocess
+train_data = data[data['Area'] < 12000]
+x_train = train_data['Area'].values.reshape(-1, 1)
+y_train = train_data['Value'].values.reshape(-1, 1)
+n_samples = x_train.shape[0]
+
+
+# %%
+# Define training parameters
+learning_rate = 2
+training_epochs = 10
+display_step = 1
+
+# Define variables
+X = tf.placeholder(tf.float32)
+y = tf.placeholder(tf.float32)
+
+W = tf.Variable(np.random.randn(), name='weight', dtype=tf.float32)
+b = tf.Variable(np.random.randn(), name='bias', dtype=tf.float32)
+
+
+# %%
+# Create model
+prediction = tf.add(tf.multiply(W, X), b)
+# Loss function
+cost = tf.reduce_sum(tf.pow(prediction - y, 2)) / (2 * n_samples)
+# Optimize
+optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cost)
+
+
+# %%
+# Initialize variables
+init = tf.global_variables_initializer()
+with tf.Session() as sess:
+    sess.run(init)
+    # Train
+    for epoch in range(training_epochs):
+        for (x, y_) in zip(x_train, y_train):
+            sess.run(optimizer, feed_dict={X: x, y: y_})
+
+        if (epoch + 1) % display_step == 0:
+            c = sess.run(cost, feed_dict={X: x_train, y: y_train})
+            weights = sess.run(W)
+            bias = sess.run(b)
+            print(f"Epoch: {epoch + 1:4d} | cost={c:.3f}, W={weights}, b={bias}")
+
+    print('Optimization finished!')
+    training_cost = sess.run(cost, feed_dict={X: x_train, y: y_train})
+    weights = sess.run(W)
+    bias = sess.run(b)
+    print(f'Training cost={training_cost}, W={weights}, b={bias}')
+
+
+# %%
+# Display results
+y_pred = weights * x_train + bias
+plt.plot(x_train, y_train, 'ro', label='Original data')
+plt.plot(x_train, y_pred, label='Fitted line')
+plt.legend()
+plt.show()
+
 
