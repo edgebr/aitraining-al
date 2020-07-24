@@ -78,6 +78,33 @@ with tf.Session() as sess:  # `with` starts a context where Session will be auto
 
 # %% [markdown]
 # ## Experiment 3
+# - After this experiment you will understand the "tensor" part of TensorFlow and how to use TensorFlow to multiply matrices.
+
+# %%
+import tensorflow as tf
+
+# %%
+# Start a TF default session
+sess = tf.InteractiveSession()
+
+# %%
+# Creates two matrix variables
+w1 = tf.Variable(tf.random_normal(shape=[2, 3], mean=1.0, stddev=1.0))
+w2 = tf.Variable(tf.random_normal(shape=[3, 1], mean=1.0, stddev=1.0))
+
+# %%
+# Defining a constant matrix
+x = tf.constant([[0.7, 0.9]])
+
+# %%
+# Initializing global variables: w1, w2
+tf.global_variables_initializer().run()
+
+# %%
+# Multiply matrices
+a = tf.matmul(x, w1)
+b = tf.matmul(a, w2)
+print(b.eval())  # Evaluates tensor `b` in the session
 
 # %% [markdown]
 # ## Experiment 4
