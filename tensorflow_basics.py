@@ -108,7 +108,35 @@ print(b.eval())  # Evaluates tensor `b` in the session
 
 # %% [markdown]
 # ## Experiment 4
+# - After this experiment you will understand `tf.Variable` and the `get_variable` function.
 
+# %%
+import tensorflow as tf
+
+# %%
+# Clears the default graph stack and resets the global default graph.
+tf.reset_default_graph()
+
+# %%
+var1 = tf.Variable(10.0, name='varname')
+var2 = tf.Variable(11.0, name='varname')
+var3 = tf.Variable(12.0)
+var4 = tf.Variable(13.0)
+
+# %%
+with tf.variable_scope('test1'):
+    var5 = tf.get_variable('varname', shape=[2], dtype=tf.float32)
+
+with tf.variable_scope('test2'):
+    var6 = tf.get_variable('varname', shape=[2], dtype=tf.float32)
+
+# %%
+print('var1: ', var1.name)
+print('var2: ', var2.name)  # A tf variable with a existing name gets a suffix to differentiate between them
+print('var3: ', var3.name)
+print('var4: ', var4.name)
+print('var5: ', var5.name)  # With `variable_scope` we can enclose a variable within a desired scope
+print('var6: ', var6.name)
 # %% [markdown]
 # ## Experiment 5
 
