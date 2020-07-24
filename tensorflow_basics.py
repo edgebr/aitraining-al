@@ -130,7 +130,7 @@ var3 = tf.Variable(12.0)
 var4 = tf.Variable(13.0)
 
 # %%
-# Variable scope allows you to create new variables and to share already created ones 
+# Variable scope allows you to create new variables and to share already created ones
 # while providing checks to not create or share by accident.
 # TODO: make it more clear
 with tf.variable_scope("test1"):
@@ -166,15 +166,16 @@ import matplotlib.pyplot as plt
 def moving_average(a, w=10):
     if len(a) < w:
         return a[:]
-    ma = [val if idx < w else sum(a[(idx - w):idx]) / w for idx, val in enumerate(a)]
+    ma = [val if idx < w else sum(a[(idx - w) : idx]) / w for idx, val in enumerate(a)]
     return ma
+
 
 # %%
 x_train = np.linspace(-1, 1, 100)
 y_train = 2 * x_train + np.random.randn(*x_train.shape) * 0.3  # y = 2 * x + noise
 
 # %%
-plt.plot(x_train, y_train, 'ro', label='Original data')
+plt.plot(x_train, y_train, "ro", label="Original data")
 plt.legend()
 plt.show()
 
@@ -182,23 +183,23 @@ tf.reset_default_graph()
 
 # %%
 # Creating a model
-X = tf.placeholder('float')
-Y = tf.placeholder('float')
+X = tf.placeholder("float")
+Y = tf.placeholder("float")
 
 # Model parameters
-W = tf.Variable(tf.random_normal([1]), name='weight')
-b = tf.Variable(tf.zeros([1], name='bias'))
+W = tf.Variable(tf.random_normal([1]), name="weight")
+b = tf.Variable(tf.zeros([1], name="bias"))
 
 # %%
 z = tf.multiply(X, W) + b
-tf.summary.histogram('z', z)
+tf.summary.histogram("z", z)
 
 # %%
 # Reverse optimization
 
-# Cost function 
+# Cost function
 cost = tf.reduce_mean(tf.square(Y - z))
-tf.summary.scalar('loss_function', cost)
+tf.summary.scalar("loss_function", cost)
 
 # Gradient descent
 learning_rate = 0.01
@@ -208,13 +209,13 @@ optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
 # %%
 # Start a session
 init = tf.global_variables_initializer()
-plot_data = {'batch_size': [], 'loss': []}
+plot_data = {"batch_size": [], "loss": []}
 with tf.Session() as sess:
     sess.run(init)
     # Merge all summaries
     merged_summary_op = tf.summary.merge_all()
     # Create summary writer for the writing
-    summary_writer = tf.summary.FileWriter(f'log/run-{time.time_ns()}', sess.graph)
+    summary_writer = tf.summary.FileWriter(f"log/run-{time.time_ns()}", sess.graph)
 
     # Write data to the model
     training_epochs = 15
@@ -231,10 +232,10 @@ with tf.Session() as sess:
             bias = sess.run(b)
             print(f"Epoch: {epoch + 1} cost={loss}, W={weights}, b={bias}")
             if loss:
-                plot_data['batch_size'].append(epoch)
-                plot_data['loss'].append(loss)
+                plot_data["batch_size"].append(epoch)
+                plot_data["loss"].append(loss)
 
-    print('Finished!')
+    print("Finished!")
     cost = sess.run(cost, feed_dict={X: x_train, Y: y_train})
     weights = sess.run(W)
     bias = sess.run(b)
@@ -244,21 +245,21 @@ with tf.Session() as sess:
 # %%
 # Visualize results
 y_pred = weights * x_train + bias
-plot_data['avgloss'] = moving_average(plot_data['loss'])
+plot_data["avgloss"] = moving_average(plot_data["loss"])
 
 plt.subplot(211)
-plt.plot(x_train, y_train, 'ro', markersize=4, label='Original data')
-plt.plot(x_train, y_pred, label='Fitted line')
-plt.xlabel('x')
-plt.ylabel('y')
+plt.plot(x_train, y_train, "ro", markersize=4, label="Original data")
+plt.plot(x_train, y_pred, label="Fitted line")
+plt.xlabel("x")
+plt.ylabel("y")
 plt.legend()
 plt.show()
 
 plt.subplot(212)
-plt.plot(plot_data['batch_size'], plot_data['avgloss'], 'b--')
-plt.xlabel('Minibatch number')
-plt.ylabel('Loss')
-plt.title('Minibatch run vs Training loss')
+plt.plot(plot_data["batch_size"], plot_data["avgloss"], "b--")
+plt.xlabel("Minibatch number")
+plt.ylabel("Loss")
+plt.title("Minibatch run vs Training loss")
 
 plt.show()
 
@@ -276,7 +277,7 @@ import tensorflow as tf
 
 
 # %%
-data = tf.train.string_input_producer(['data.csv'])
+data = tf.train.string_input_producer(["data.csv"])
 reader = tf.TextLineReader()
 
 # Getting queue values
@@ -285,7 +286,7 @@ key, value = reader.read(data)
 # value represents the raw strings read by row, which are sent to the decoder for decoding.
 
 # The data type here determines the type of data to be read, which should be in the list form.
-record_defaults = [[1.], [1.], [1.], [1.]]  
+record_defaults = [[1.0], [1.0], [1.0], [1.0]]
 # Each parsed attribute (column) is a scalar with the rank value of 0
 col1, col2, col3, col4 = tf.decode_csv(value, record_defaults=record_defaults)
 features = tf.stack([col1, col2, col3])
@@ -307,17 +308,88 @@ with tf.Session() as sess:
         example, label = sess.run([features, col4])
         print(example, label)
 
-    print('Done!')
+    print("Done!")
 
     coord.request_stop()
     coord.join(threads)
 
 # %% [markdown]
 # ## Experiment 7
+# - After this exepriment, you will understand graphic operations with TensorFlow. That is, oprations within graphs.
+
+# %%
+import numpy as np
+import tensorflow as tf
+
+# %%
+# Defines a constant variable
+c = tf.constant(0.0)
+# Creates a graph
+g = tf.Graph()
+with g.as_default():
+    c1 = tf.constant(0.0)
+    print(c1.graph)
+    print(g)
+    # Not the same graph as c1.graph and g
+    print(c.graph)
+
+# Same graph as c.graph
+g2 = tf.get_default_graph()
+print(g2)
+
+# Reset graphs
+tf.reset_default_graph()
+g3 = tf.get_default_graph()
+print(g3)  # New graph
+
+
+# %%
+# Get the tensor
+print(c1.name)
+t = g.get_tensor_by_name(name="Const:0")  # This name is the default one.
+print(t)
+
+# %%
+# Get an operation
+
+# Define constant variables
+a = tf.constant([[1.0, 2.0]])
+b = tf.constant([[1.0], [3.0]])
+
+# Define a op named 'example_op'
+tensor1 = tf.matmul(a, b, name="example_op")
+# Print op.name and itself (and break line)
+print(tensor1.name, tensor1)
+# Get same op as above using its output tensor name
+test = g3.get_tensor_by_name("example_op:0")
+print(test)
+
+print(tensor1.op.name)
+test_op = g3.get_operation_by_name("example_op")
+print(test_op)
+
+with tf.Session() as sess:
+    test = sess.run(test)
+    print(test)
+    test = tf.get_default_graph().get_tensor_by_name("example_op:0")
+    print(test)
+
+# TODO: improve this output
+
+# %%
+# Get all lists
+
+# Return the list of operating nodes in the graph
+tt2 = g.get_operations()
+print(tt2)
+
+# %%
+# Get an object
+tt3 = g.as_graph_element(c1)
+print(tt3)
 
 # %% [markdown]
 # ## Experiment 8
 
 # %% [markdown]
 # ## Experiment 9
-
