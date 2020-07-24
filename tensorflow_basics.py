@@ -51,15 +51,30 @@ import tensorflow as tf
 # Defining a variable
 hello = tf.constant('hello, tensorflow!')  # a constant 
 
+
 # %%
 sess = tf.Session()     # Creates a session
 print(sess.run(hello))  # Run the session on the `hello` constant to get the result
-
 # %%
 sess.close()  # Close the session
-
 # %% [markdown]
 # ## Experiment 2
+# - After this experiment you will understand the definition of sessions and how to use them with the python context manager (`with`).
+
+# %% 
+import tensorflow as tf
+
+# %%
+# Defining constants
+a = tf.constant(3)
+b = tf.constant(4)
+
+# %%
+# Creating a Session
+with tf.Session() as sess:  # `with` starts a context where Session will be automatically closed
+    print(f'Add: {sess.run(a + b)}')
+    print(f'Multiply: {sess.run(a * b)}')
+
 
 # %% [markdown]
 # ## Experiment 3
