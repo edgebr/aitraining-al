@@ -241,8 +241,6 @@ with tf.Session() as sess:
     print(f"cost={cost}, W={weights}, b={bias}")
 
 
-
-
 # %%
 # Visualize results
 y_pred = weights * x_train + bias
@@ -270,6 +268,49 @@ plt.show()
 
 # %% [markdown]
 # ## Experiment 6
+# - After this experiment, you will understand how to read data from files with TensorFlow.
+# - TODO: use `tf.data` and `tf.data.TextLineDataset`.
+
+# %%
+import tensorflow as tf
+
+
+# %%
+data = tf.train.string_input_producer(['data.csv'])
+reader = tf.TextLineReader()
+
+# Getting queue values
+key, value = reader.read(data)
+# key represents the information of the read file and the number of rows.
+# value represents the raw strings read by row, which are sent to the decoder for decoding.
+
+# The data type here determines the type of data to be read, which should be in the list form.
+record_defaults = [[1.], [1.], [1.], [1.]]  
+# Each parsed attribute (column) is a scalar with the rank value of 0
+col1, col2, col3, col4 = tf.decode_csv(value, record_defaults=record_defaults)
+features = tf.stack([col1, col2, col3])
+
+# %%
+init_op = tf.global_variables_initializer()
+local_init_op = tf.local_variables_initializer()
+
+# %%
+with tf.Session() as sess:
+    # Start a session and perform initialization
+    sess.run(init_op)
+    sess.run(local_init_op)
+    # Start populating the filename queue
+    coord = tf.train.Coordinator()
+    # Feed the queue
+    threads = tf.train.start_queue_runners(coord=coord)
+    for i in range(30):
+        example, label = sess.run([features, col4])
+        print(example, label)
+
+    print('Done!')
+
+    coord.request_stop()
+    coord.join(threads)
 
 # %% [markdown]
 # ## Experiment 7
