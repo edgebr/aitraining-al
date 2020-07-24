@@ -61,6 +61,7 @@ sess.close()  # Close the session
 # ## Experiment 2
 # - After this experiment you will understand the definition of sessions and how to use them with the python context manager (`with`).
 
+
 # %%
 import tensorflow as tf
 
@@ -68,6 +69,7 @@ import tensorflow as tf
 # Defining constants
 a = tf.constant(3)
 b = tf.constant(4)
+
 
 # %%
 # Creating a Session
@@ -92,19 +94,23 @@ sess = tf.InteractiveSession()
 w1 = tf.Variable(tf.random_normal(shape=[2, 3], mean=1.0, stddev=1.0))
 w2 = tf.Variable(tf.random_normal(shape=[3, 1], mean=1.0, stddev=1.0))
 
+
 # %%
 # Defining a constant matrix
 x = tf.constant([[0.7, 0.9]])
 
+
 # %%
 # Initializing global variables: w1, w2
 tf.global_variables_initializer().run()
+
 
 # %%
 # Multiply matrices
 a = tf.matmul(x, w1)
 b = tf.matmul(a, w2)
 print(b.eval())  # Evaluates tensor `b` in the session
+
 
 # %% [markdown]
 # ## Experiment 4
@@ -133,6 +139,7 @@ with tf.variable_scope("test1"):
 with tf.variable_scope("test2"):
     var6 = tf.get_variable("varname", shape=[2], dtype=tf.float32)
 
+
 # %%
 print("var1: ", var1.name)
 print(
@@ -146,6 +153,120 @@ print(
 print("var6: ", var6.name)
 # %% [markdown]
 # ## Experiment 5
+# - After this experiment you will understand the virtualization tool TensorBoard.
+
+# %%
+import time
+import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+# %%
+def moving_average(a, w=10):
+    if len(a) < w:
+        return a[:]
+    ma = [val if idx < w else sum(a[(idx - w):idx]) / w for idx, val in enumerate(a)]
+    return ma
+
+# %%
+x_train = np.linspace(-1, 1, 100)
+y_train = 2 * x_train + np.random.randn(*x_train.shape) * 0.3  # y = 2 * x + noise
+
+# %%
+plt.plot(x_train, y_train, 'ro', label='Original data')
+plt.legend()
+plt.show()
+
+tf.reset_default_graph()
+
+# %%
+# Creating a model
+X = tf.placeholder('float')
+Y = tf.placeholder('float')
+
+# Model parameters
+W = tf.Variable(tf.random_normal([1]), name='weight')
+b = tf.Variable(tf.zeros([1], name='bias'))
+
+# %%
+z = tf.multiply(X, W) + b
+tf.summary.histogram('z', z)
+
+# %%
+# Reverse optimization
+
+# Cost function 
+cost = tf.reduce_mean(tf.square(Y - z))
+tf.summary.scalar('loss_function', cost)
+
+# Gradient descent
+learning_rate = 0.01
+optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
+
+
+# %%
+# Start a session
+init = tf.global_variables_initializer()
+plot_data = {'batch_size': [], 'loss': []}
+with tf.Session() as sess:
+    sess.run(init)
+    # Merge all summaries
+    merged_summary_op = tf.summary.merge_all()
+    # Create summary writer for the writing
+    summary_writer = tf.summary.FileWriter(f'log/run-{time.time_ns()}', sess.graph)
+
+    # Write data to the model
+    training_epochs = 15
+    display_step = 1
+    for epoch in range(training_epochs):
+        for (x, y) in zip(x_train, y_train):
+            sess.run(optimizer, feed_dict={X: x, Y: y})
+            summary_str = sess.run(merged_summary_op, feed_dict={X: x, Y: y})
+            summary_writer.add_summary(summary_str, epoch)
+
+        if epoch % display_step == 0:
+            loss = sess.run(cost, feed_dict={X: x_train, Y: y_train})
+            weights = sess.run(W)
+            bias = sess.run(b)
+            print(f"Epoch: {epoch + 1} cost={loss}, W={weights}, b={bias}")
+            if loss:
+                plot_data['batch_size'].append(epoch)
+                plot_data['loss'].append(loss)
+
+    print('Finished!')
+    cost = sess.run(cost, feed_dict={X: x_train, Y: y_train})
+    weights = sess.run(W)
+    bias = sess.run(b)
+    print(f"cost={cost}, W={weights}, b={bias}")
+
+
+
+
+# %%
+# Visualize results
+y_pred = weights * x_train + bias
+plot_data['avgloss'] = moving_average(plot_data['loss'])
+
+plt.subplot(211)
+plt.plot(x_train, y_train, 'ro', markersize=4, label='Original data')
+plt.plot(x_train, y_pred, label='Fitted line')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.legend()
+plt.show()
+
+plt.subplot(212)
+plt.plot(plot_data['batch_size'], plot_data['avgloss'], 'b--')
+plt.xlabel('Minibatch number')
+plt.ylabel('Loss')
+plt.title('Minibatch run vs Training loss')
+
+plt.show()
+
+
+# %% [markdown]
+# Now, in your terminal, type: `tensorboard --logdir log` and go to the given address. You can see your training log!
 
 # %% [markdown]
 # ## Experiment 6
@@ -158,3 +279,4 @@ print("var6: ", var6.name)
 
 # %% [markdown]
 # ## Experiment 9
+
